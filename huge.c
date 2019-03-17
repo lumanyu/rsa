@@ -1,5 +1,19 @@
-#include <huge.h>
+#include "huge.h"
 #include <stdio.h>
+
+/**
+ * Extend the space for h by 1 and set the LSB of that int
+ * to 1
+ */
+void expand(huge *h)
+{
+    unsigned char *tmp = h->rep;
+    h->size++;
+    h->rep = (unsigned char*) calloc (h->size, sizeof(unsigned char));
+    memcpy (h->rep + 1, tmp, (h->size - 1) * sizeof(unsigned char));
+    h->rep[0] = 0x01;
+    free(tmp);
+}
 
 void
 add (huge *h1, huge *h2)
@@ -38,4 +52,8 @@ add (huge *h1, huge *h2)
         //still overflowed; allocate more space
         expand(h1);
     }
+}
+
+int main(void) {
+    return 0;
 }
