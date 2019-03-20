@@ -196,6 +196,111 @@ void multiply (huge *h1, huge *h2)
     } while (i);
 }
 
+static void right_shift(huge *h1)
+{
+    int i;
+    unsigned int old_carry, carry = 0;
+
+    i = 0;
+    do {
+        old_carry = carry;
+        carry = (h1->rep[i] & 0x01) << 7;//xxxx xxx1 ->  1xxx xxxx
+        h1->rep[i] = (h1->rep[i] >> 1) | old_carry;
+    } while (++i < h1->size);
+
+    contract (h1);
+}
+
+/**
+ * compare h1 to h2. Return:
+ * 0 if h1 == h2
+ * a positive number if h1>h2
+ * a negative number if h1<h2
+ */
+
+int compare(huge *h1, huge *h2)
+{
+    int i, j;
+
+    if (h1->size > h2->size) {
+        return 1;
+    }
+
+    if (h1->size < h2->size) {
+        return -1;
+    }
+
+    //otherwise, sizes are equal, have to actually commpare
+    //only have to compare "hi-int", since the lower ints
+    //can't change the comparsion.
+    i = j =0;
+
+    //ohterwise, keep searching through the representational integers
+    //until one is bigger than another - once we've found one, it's
+    //safe to stop, since the "lower order bytes" can't affect the
+    //comparsion
+    while (i < h1->size && j < h2->size){
+        if (h1->rep[i] < h2->rep[j]) {
+            return -1;
+        } else if (h1->rep[i] > h2->rep[j]) {
+            return 1;
+        }
+        i++;
+        j++;
+    }
+
+    //If we got all the way to the end without a comparison, the
+    //two are equal
+    return 0;
+}
+
+
+/**
+ * dividend = numerator, divisor = denominator
+ * 
+ * Note that this process destroys divisor (and, of course,
+ * overwrites quotient). The dividend is the remainder of the
+ * division (if that's important to the caller). The divisor will
+ * be modified by this routine, but it will end up back where it
+ * "started".
+ */
+
+void divide(huge *dividend, huge *divisor, huge *quotient)
+{
+    int bit_size, bit_position;
+
+    //"bit_position" keeps track of which bit, of the quotient,
+    //is being set or cleared on the current operation.
+    bit_size = bit_position = 0;
+
+    //First, left-shift divisor until it's >= than the divideend
+    while (compare(divisor, dividend) < 0) {
+        left_shift(divisor);
+        bit_size++;
+    }
+
+    //overestimates a bit in some
+    quotient->size = (bit_size / 8) + 1;
+    quotient->rep = (unsigned char*) calloc(quotient->size, sizeof(unsigned char));
+    memset(quotient->rep, 0, quotient->size);
+
+    bit_position = 8 - (bit_size%8) - 1;
+
+    do {
+        if (compare(divisor, dividend) <= 0) {
+            subtract(dividend, divisor); //dividend -= divisor
+            quotient->rep[(int)(bit_position/8)] |=
+                (0x80 >> (bit_position%8));
+        }
+
+        if (bit_size) {
+            right_shift(divisor);
+        }
+        bit_position++;
+    } while (bit_size--);
+
+}
+
 int main(void) {
     char h1[100] = {0x01, 0xFF, 0xFE};
     char h2[100] = {0x01, 0xFF, 0xFE};
