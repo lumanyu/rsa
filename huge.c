@@ -77,7 +77,7 @@ void contract (huge *h)
     }
 }
 
-static void subtract(huge *h1, huge *h2)
+void subtract(huge *h1, huge *h2)
 {
     int i = h1->size;
     int j = h2->size;
@@ -280,17 +280,21 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
     }
 
     //overestimates a bit in some
-    quotient->size = (bit_size / 8) + 1;
-    quotient->rep = (unsigned char*) calloc(quotient->size, sizeof(unsigned char));
-    memset(quotient->rep, 0, quotient->size);
+    if (quotient) {
+        quotient->size = (bit_size / 8) + 1;
+        quotient->rep = (unsigned char*) calloc(quotient->size, sizeof(unsigned char));
+        memset(quotient->rep, 0, quotient->size);
+    }
 
     bit_position = 8 - (bit_size%8) - 1;
 
     do {
         if (compare(divisor, dividend) <= 0) {
-            subtract(dividend, divisor); //dividend -= divisor
-            quotient->rep[(int)(bit_position/8)] |=
-                (0x80 >> (bit_position%8));
+            if (quotient) {
+                subtract(dividend, divisor); //dividend -= divisor
+                quotient->rep[(int)(bit_position/8)] |=
+                    (0x80 >> (bit_position%8));
+            }
         }
 
         if (bit_size) {
@@ -301,7 +305,7 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
 
 }
 
-int main(void) {
+int huge_main(void) {
     char h1[100] = {0x01, 0xFF, 0xFE};
     char h2[100] = {0x01, 0xFF, 0xFE};
     huge hh1 = {h1, 100};
