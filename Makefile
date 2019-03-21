@@ -1,14 +1,36 @@
-HEADERS = huge.h
-OBJECTS = huge.o
+TARGET = trsa
+LIBS = -lm
+CC = gcc
 
-default: huge
+.PHONY: default all clean
+
+default: $(TARGET)
+all: default
+
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+HEADERS = $(wildcard *.h)
+
+#HEADERS = huge.h
+#OBJECTS = huge.o
+CFLAGS=-Wall -O0 -g
+
+#default: huge
 
 %.o: %.c $(HEADERS)
-        gcc -c $< -o $@
+	    $(CC) $(CFLAGS) -c $< -o $@
 
-huge: $(OBJECTS)
-        gcc $(OBJECTS) -o $@
+#huge: $(OBJECTS)
+#	    gcc $(CFLAGS) $(OBJECTS) -o $@
+
+#main: $(OBJECTS)
+#	    gcc $(CFLAGS) $(OBJECTS) -o $@
+
+.PRECIOUS: $(TARGET) $(OBJECTS)
+
+$(TARGET): $(OBJECTS)
+	    $(CC) $(OBJECTS) -Wall $(LIBS) -o $@
 
 clean:
-        -rm -f $(OBJECTS)
-        -rm -f program
+	    -rm -f $(OBJECTS)
+					#-rm -f program
+					-rm -f $(TARGET)
