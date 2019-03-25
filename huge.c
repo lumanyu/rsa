@@ -14,7 +14,9 @@ void expand(huge *h)
     unsigned char *tmp = h->rep;
     h->size++;
     h->rep = (unsigned char*) calloc (h->size, sizeof(unsigned char));
-    memcpy (h->rep + 1, tmp, (h->size - 1) * sizeof(unsigned char));
+//memcpy (h->rep + 1, tmp, (h->size - 1) * sizeof(unsigned char));
+    memmove(h->rep + 1, tmp, (h->size - 1) * sizeof(unsigned char));
+    //h->rep[0] = 0x01;
     h->rep[0] = 0x01;
     free(tmp);
 }
@@ -150,7 +152,7 @@ void set_huge(huge *h, unsigned int val)
 
     //Figure out the minimum amount of space this "val" will take
     //up in char* (leave at least one byte, though, if "val" is 0)
-    for (mask = 0xFF000000; mask > 0x000000FF; mask >>8) {
+    for (mask = 0xFF000000; mask > 0x000000FF; mask >>=8) {
         if (val & mask) {
             break;
         }
@@ -188,7 +190,7 @@ void multiply (huge *h1, huge *h2)
     do {
         i--;
         for (mask = 0x01; mask; mask <<=1) {
-            if (mask && h2->rep[i]) {
+            if (mask & h2->rep[i]) {
                 add(h1, &temp);
             }
             left_shift(&temp);
@@ -196,7 +198,7 @@ void multiply (huge *h1, huge *h2)
     } while (i);
 }
 
-static void right_shift(huge *h1)
+void right_shift(huge *h1)
 {
     int i;
     unsigned int old_carry, carry = 0;
@@ -278,6 +280,7 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
         left_shift(divisor);
         bit_size++;
     }
+    printf("bit_size is %d\n", bit_size);
 
     //overestimates a bit in some
     if (quotient) {
@@ -290,8 +293,8 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
 
     do {
         if (compare(divisor, dividend) <= 0) {
+            subtract(dividend, divisor); //dividend -= divisor
             if (quotient) {
-                subtract(dividend, divisor); //dividend -= divisor
                 quotient->rep[(int)(bit_position/8)] |=
                     (0x80 >> (bit_position%8));
             }
@@ -303,6 +306,7 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
         bit_position++;
     } while (bit_size--);
 
+    //printf("bit_size is %d\n", dividend);
 }
 
 int huge_main(void) {
