@@ -184,9 +184,10 @@ void multiply (huge *h1, huge *h2)
     set_huge(&temp, 0);
     copy_huge(&temp, h1);
 
+    i = h1->size;
+
     set_huge(h1, 0);
 
-    i = h1->size;
     do {
         i--;
         for (mask = 0x01; mask; mask <<=1) {
@@ -307,6 +308,24 @@ void divide(huge *dividend, huge *divisor, huge *quotient)
     } while (bit_size--);
 
     //printf("bit_size is %d\n", dividend);
+}
+
+void
+print_huge (huge *h)
+{
+	if (h->size <=0) {
+		printf("illegel huge size\n", KRED);
+	}
+	printf(KBLU "huge is " KRESET);
+	//unsigned int i = h->size;
+	unsigned int i = 0;
+	//for (; i>0; i--) {
+	for (; i<h->size; i++) {
+		//printf("%02X", h->rep[i-1]);
+		printf("%02X", h->rep[i]);
+		//printf("%02X", h->rep[h->size-i-1]);
+	}
+	printf("\n");
 }
 
 int huge_main(void) {
